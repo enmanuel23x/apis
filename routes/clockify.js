@@ -84,7 +84,6 @@ router.get('/getTime', async (req, res) => {
         emailsFiltered[i]=email
       }
     })
-    //console.log(data)
     emailsFiltered.forEach(async email => {
     
     const userId = await getUserID(email)
@@ -224,7 +223,6 @@ function formatTime(isH, isM, isS) {
         seconds = splitS[0]
     }
     let time = [hours, minutes, seconds]
-    console.log(time)
     return time
 }
 
@@ -238,7 +236,7 @@ function getTimeEntries(userId, descp) {
           const result = await ClockifyAxios.get(`/workspaces/${workspaceId}/user/${userId}/time-entries`, {params})
           resolve(result.data)
         } catch (error) {
-            //console.log(error)
+            console.log(error)
           reject(error)
         }
       });
@@ -267,7 +265,6 @@ async function updateTrelloCard() {
                 if(cf[j].name == 'Días de desviación'){
                     axios.put(`https://api.trello.com/1/cards/${activities[i].act_card_id}/customField/${cf[j].id}/item${add}`, {value:{number: `${activities[i].act_day_desv}`}})
                     .then(resp => {
-                        //console.log(resp.data)
                     })
                     .catch(error =>[
                         console.log(error)
@@ -275,7 +272,6 @@ async function updateTrelloCard() {
                 }else if(cf[j].name == '% Desviación Plan vs Real'){
                     axios.put(`https://api.trello.com/1/cards/${activities[i].act_card_id}/customField/${cf[j].id}/item${add}`, {value:{number: `${activities[i].act_desv_percentage}`}})
                     .then(resp => {
-                        //console.log(resp.data)
                     })
                     .catch(error =>[
                         console.log(error)
@@ -283,33 +279,11 @@ async function updateTrelloCard() {
                 }else if(cf[j].name == 'HH Clockify'){
                     axios.put(`https://api.trello.com/1/cards/${activities[i].act_card_id}/customField/${cf[j].id}/item${add}`, {value:{number: `${activities[i].act_time_loaded}`}})
                     .then(resp => {
-                        //console.log(resp.data)
                     })
                     .catch(error =>[
                         console.log(error)
                     ])
-                }/*else if(cf[j].name == 'Fecha de inicio real'){
-                  split = activities[i].act_init_real_date
-                  //console.log(split)
-                  //split = split.split('')
-                  axios.put(`https://api.trello.com/1/cards/${activities[i].act_card_id}/customField/${cf[j].id}/item${add}`, {value:{date: `${split}`}})
-                  .then(resp => {
-                      //console.log(resp.data)
-                  })
-                  .catch(error =>[
-                      console.log(error)
-                  ])
-              }else if(cf[j].name == 'Fecha fin estimada/real'){
-                split = activities[i].act_real_end_date
-                
-                axios.put(`https://api.trello.com/1/cards/${activities[i].act_card_id}/customField/${cf[j].id}/item${add}`, {value:{date: `${split}`}})
-                .then(resp => {
-                   //console.log(resp.data)
-                })
-                .catch(error =>[
-                    console.log(error)
-                ])
-            } */
+                }
                setTimeout(()=>{}, 1000)     
             }
           }
@@ -389,18 +363,8 @@ async function updateDesvPercent(){
         let updateValues = await pool.query(`UPDATE activities SET act_desv_percentage = ${desvPert[i]}, act_day_desv = ${daysDesv[i]} 
          WHERE act_id = ${ids[i]}`)
 
-        //console.log(updateValues)
 
     }
-
-    //console.log("Tiempo cargado:",time_loaded)
-    //console.log("Tiempo estimado:", estimated_hours)
-    //console.log("Status:", status)
-    //console.log("Indices:", index)
-    //console.log("ids", ids)
-    //console.log("Dias", end_date)
-    //console.log("Desvicion de horas", desvPert)
-    //console.log("Desvicion de dias", daysDesv)
 
 }
 
@@ -434,26 +398,9 @@ function checkH(duration) {
                   { value: { number: `${activities[i].act_time_loaded}` } }
                 )
                 .then((resp) => {
-                  console.log(resp.data);
                 })
                 .catch((error) => [console.log(error)]);
-            } /*else if(cf[j].name == 'Días de desviación'){
-                      axios.put(`https://api.trello.com/1/cards/${activities[i].act_card_id}/customField/${cf[j].id}/item${add}`, {value:{number: `${activities[i].act_estimated_hours}`}})
-                      .then(resp => {
-                          console.log(resp.data)
-                      })
-                      .catch(error =>[
-                          console.log(error)
-                      ])
-                  }else if(cf[j].name == '% Desviación Plan vs Real'){
-                      axios.put(`https://api.trello.com/1/cards/${activities[i].act_card_id}/customField/${cf[j].id}/item${add}`, {value:{number: `${activities[i].act_estimated_hours}`}})
-                      .then(resp => {
-                          console.log(resp.data)
-                      })
-                      .catch(error =>[
-                          console.log(error)
-                      ])
-                  }*/ else if (
+            }  else if (
               cf[j].name == "HH Clockify"
             ) {
               axios
@@ -462,7 +409,6 @@ function checkH(duration) {
                   { value: { number: `${activities[i].act_time_loaded}` } }
                 )
                 .then((resp) => {
-                  console.log(resp.data);
                 })
                 .catch((error) => [console.log(error)]);
             }
@@ -475,7 +421,7 @@ function checkH(duration) {
   }
   
   async function getMembersEmail() {
-  console.log('aquix1')
+    
   activities = await pool.query("SELECT * FROM activities")
   const members = []
   const emails = []
@@ -483,24 +429,18 @@ function checkH(duration) {
   for (let i = 0; i < activities.length; i++) {
     await TrelloAxios.get(`/cards/${activities[i].act_card_id}${add}`)
     .then((resp)=>{
-      //console.log(resp.data)
       data = resp.data
       
       if(data.idMembers[0] != '[]'){
-        //console.log(data.idMembers)
+        
         if(!members.includes(data.idMembers[0])){
-          //console.log("aqui")
+          
           tam = members.length
           members[tam] = data.idMembers[0]
           
         }
       }
-      /*if(i==(activities.length-1)){
-        emails = getEmails(members)
-        console.log(emails)
-      }*/
-    
-      //console.log(data[i].idMembers.length)
+      
       
     })
     .catch(error=>{
@@ -510,16 +450,15 @@ function checkH(duration) {
   
   
     for (let j = 0; j < members.length; j++) {
-      //console.log(members[j])
       await TrelloAxios.get(`/members/${members[j]}`)
       .then(resp =>{
-        //console.log('aquix')
+        
         data = resp.data
-        //console.log(data)
+        
         if(data.email != null){
         tamaño = emails.length
         emails[tamaño] = data.email
-        //console.log(emails[tamaño])
+        
         } 
       })
       .catch(error=>{

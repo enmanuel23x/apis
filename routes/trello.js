@@ -27,7 +27,6 @@ router.get('/getBoards', async (req, res) => {
 });
 
 router.get('/createCards', async (req,res)=>{
-  //console.log("entro")
   const cardsToCreate = await pool.query(`SELECT * FROM activities LEFT JOIN request ON activities.req_id = request.req_id WHERE activities.act_card_id IS NULL AND activities.act_title = 'false' ORDER BY activities.act_init_date`)
   let boardIds = cardsToCreate.map(board => board.board_id)
   let boardIdsFiltered = []
@@ -37,7 +36,6 @@ router.get('/createCards', async (req,res)=>{
     }
   })
   boardIdsFiltered.forEach(async(boardId,i) =>{
-    //console.log(boardId)
     list = await createList(boardId, 'Backlog - '+i)
     if(i == 0){
       const data = await createCustomFields(boardId)
@@ -60,19 +58,17 @@ router.get('/createCards', async (req,res)=>{
  */
 router.get('/getCards', async (req, res) => {
         const boards = await pool.query(`SELECT * FROM request WHERE sta_id = 'open'`)
-        let id_boards = boards.map(board => board.board_id )
         let cards = []
-        let existe = ""
         boards.forEach(async (board, i) => {
             cards[i] = await getCards(board.board_id);
             Array.from(cards[i]).forEach(async (card) => {
                 customFields = await getCustomFieldsInCard(card.id)
                 cflength = customFields.length
-                //console.log(customFields)
-                    if(customFields.length > 0){
+                    if(customFields[6]!= undefined && customFields[5]!= undefined && customFields[4]!= undefined && customFields[3]!= undefined 
+                      && customFields[2]!= undefined && customFields[1]!= undefined && customFields[0]!= undefined){
                     const req_id = board.req_id
-                    const act_init_date = formatDateTime(customFields[customFields.length-1].value.date)
-                    const act_init_real_date = formatDateTime(customFields[customFields.length-2].value.date)
+                    const act_init_date = formatDateTime(customFields[6].value.date)
+                    const act_init_real_date = formatDateTime(customFields[5].value.date)
                     const act_real_end_date = formatDateTime(customFields[4].value.date)
                     const estimated_hours = customFields[3].value.number
                     const act_end_date = formatDateTime(card.due)
@@ -84,27 +80,18 @@ router.get('/getCards', async (req, res) => {
                     if(exist.length <= 0){
                         try{
                             const requestx = await pool.query(`INSERT INTO activities (req_id, act_trello_name, act_description_trello, act_card_id, act_init_date, act_init_real_date, act_end_date, act_real_end_date, act_estimated_hours, act_time_loaded , act_desv_percentage,act_day_desv, act_porcent) VALUES ('${req_id}','${card.name}', '${card.desc}', '${card.id}', '${act_init_date}', '${act_init_real_date}', '${act_end_date}', '${act_real_end_date}', '${estimated_hours}','${act_time_loaded}' ,'${act_desv_percentage}','${act_day_desv}', '${act_porcent}')`)
-                            //res.json(requestx)
-                            existe = "No existe"
-                            ////console.log(card.name)
-                            ////console.log(customFields[4].value.number)
-                            ////console.log(customFields[3].value.number)
-                            //console.log("no existe")
                         } catch (error){
-                            //console.log(error)
+                            console.log(error)
                         }
                     }else{
                       const requestx = await pool.query(`UPDATE activities SET act_init_real_date='${act_init_real_date}',act_real_end_date='${act_real_end_date}', act_porcent='${act_porcent}' WHERE act_trello_name ='${card.name}' `)
-                        //console.log('ya existe')
-                        existe = "Ya existe"
                     }
                   } 
                   setTimeout(()=>{}, 6000)
             })
             setTimeout(()=>{}, 6000)
         }); 
-        //console.log("existe")
-        res.send(existe)
+        res.send("listo")
 });
 
 /**
@@ -309,7 +296,7 @@ function getBoards() {
           });
           resolve(result.data)
         } catch (error) {
-            //console.log(error)
+            console.log(error)
           reject(error)
         }
       });
@@ -333,43 +320,36 @@ function createCustomFields(boardId) {
         "modelType": "board",
         "name": "Fecha de inicio planificada",
         "type":"date"});
-        //console.log(result)
         await new Promise(resolve => setTimeout(resolve, 6000));
         const result2 = await TrelloAxios.post(`/customField${add}`, {"idModel":boardId,
         "modelType": "board",
         "name": "Fecha de inicio real",
         "type":"date"});
-        //console.log(result2)
         await new Promise(resolve => setTimeout(resolve, 6000));
         const result3 = await TrelloAxios.post(`/customField${add}`, {"idModel":boardId,
         "modelType": "board",
         "name": "Fecha fin estimada/real",
         "type":"date"});
-        //console.log(result3)
         await new Promise(resolve => setTimeout(resolve, 6000));
         const result4 = await TrelloAxios.post(`/customField${add}`, {"idModel":boardId,
         "modelType": "board",
         "name": "HH Estimadas",
         "type":"number"});
-        //console.log(result4)
         await new Promise(resolve => setTimeout(resolve, 6000));
         const result6 = await TrelloAxios.post(`/customField${add}`, {"idModel":boardId,
         "modelType": "board",
         "name": "HH Clockify",
         "type":"number"});
-        //console.log(result6)
         await new Promise(resolve => setTimeout(resolve, 6000));
         const result7 = await TrelloAxios.post(`/customField${add}`, {"idModel":boardId,
         "modelType": "board",
         "name": "% Desviación Plan vs Real",
         "type":"number"});
-        //console.log(result7)
         await new Promise(resolve => setTimeout(resolve, 6000));
         const result8 = await TrelloAxios.post(`/customField${add}`, {"idModel":boardId,
         "modelType": "board",
         "name": "Días de desviación",
         "type":"number"});
-        //console.log(result8)
         await new Promise(resolve => setTimeout(resolve, 6000));
         resolve(result8.data)
         }
@@ -387,19 +367,14 @@ async function calculatePorcent(cardID) {
   const result = await TrelloAxios.get(`/cards/${cardID}/checklists${add}`)
   let checklist = result.data[0]
   let checkItems = checklist.checkItems
-  ////console.log(checkItems)
   let length = checkItems.length
   let completed = 0
   let icompleted = 0
   let percentage = 0
   checkItems.forEach(c =>{
-    ////console.log(c)
     c.state == 'complete' ? completed+=1 : icompleted+=1
-    ////console.log(c)
-    ////console.log(completed)
   })
   completed == 0 ? percentage = 0 : percentage = (completed/length)*100
-  ////console.log(percentage)
   resolve(percentage)
         } catch (error) {
           reject(error)
@@ -411,7 +386,6 @@ function createList(boardId, name) {
       try {
         async function createListprocess(resolve){
           const result = await TrelloAxios.post(`/boards/${boardId}/lists${add}`, {"name": name });
-          //console.log(result)
           resolve(result.data)
         }
         setTimeout( function(){ createListprocess(resolve); }, 2000);
@@ -422,12 +396,10 @@ function createList(boardId, name) {
 }
 
 function createCard(card, listId) {
-  ////console.log('aqui2')
   return new Promise(async (resolve,reject) => {
       try {
         async function createCardprocess(resolve){
           const result = await TrelloAxios.post(`/card${add}`, {"name": card.act_trello_name,"idList": listId, "desc": card.act_description_trello, "due": card.act_end_date});
-        //console.log(result)
         const updateCard = await pool.query(`UPDATE activities SET act_card_id = '${result.data.id}' WHERE act_trello_name = '${card.act_trello_name}'`)
         await new Promise(resolve => setTimeout(resolve, 6000));
         await updateCustomFields(card.board_id, card, result.data.id)
@@ -444,15 +416,11 @@ function createCard(card, listId) {
 
 async function addMember(card, cardId){
   return new Promise(async (resolve,reject) => {
-    //console.log("Agregando miembro")
       try {
-        ////console.log(card.act_trello_user)
         
         const result = await TrelloAxios.get(`/members/${card.act_trello_user}${add}`);
-        ////console.log(result.data)
         const memberId = result.data.id
         await new Promise(resolve => setTimeout(resolve, 6000));
-        ////console.log(memberId)
         const result1 = await TrelloAxios.post(`/card/${cardId}/idMembers${add}`, {"value": memberId});
         
         //resolve(result.data)
@@ -463,7 +431,6 @@ async function addMember(card, cardId){
 }
 
 async function updateCustomFields(idBoard, card, cardID) {
-  //console.log("Campo actualizado")
   axios.get(`https://api.trello.com/1/boards/${idBoard}/customFields${add}`)
   .then(async resp =>{
       cf = resp.data
@@ -473,43 +440,38 @@ async function updateCustomFields(idBoard, card, cardID) {
               if(cf[j].name == 'Días de desviación'){
                   axios.put(`https://api.trello.com/1/cards/${cardID}/customField/${cf[j].id}/item${add}`, {value:{number: '0'}})
                   .then(resp => {
-                      ////console.log(resp.data)
                   })
                   .catch(error =>[
-                      //console.log(error)
+                      console.log(error)
                   ])
               }else if(cf[j].name == '% Desviación Plan vs Real'){
                   axios.put(`https://api.trello.com/1/cards/${cardID}/customField/${cf[j].id}/item${add}`, {value:{number: '0'}})
                   .then(resp => {
-                      ////console.log(resp.data)
                   })
                   .catch(error =>[
-                      //console.log(error)
+                      console.log(error)
                   ])
               }else if(cf[j].name == 'HH Clockify'){
                   axios.put(`https://api.trello.com/1/cards/${cardID}/customField/${cf[j].id}/item${add}`, {value:{number: `${card.act_time_loaded}`}})
                   .then(resp => {
-                      ////console.log(resp.data)
                   })
                   .catch(error =>[
-                      //console.log(error)
+                      console.log(error)
                   ])
               }else if(cf[j].name == 'Fecha de inicio planificada'){
             split = card.act_init_date
             axios.put(`https://api.trello.com/1/cards/${cardID}/customField/${cf[j].id}/item${add}`, {value:{date: `${split}`}})
             .then(resp => {
-                ////console.log(resp.data)
             })
             .catch(error =>[
-                //console.log(error)
+                console.log(error)
             ])
         }else if(cf[j].name == 'HH Estimadas'){
           axios.put(`https://api.trello.com/1/cards/${cardID}/customField/${cf[j].id}/item${add}`, {value:{number: `${card.act_estimated_hours}`}})
           .then(resp => {
-              ////console.log(resp.data)
           })
           .catch(error =>[
-              //console.log(error)
+              console.log(error)
           ])
       } 
                   
@@ -518,7 +480,7 @@ async function updateCustomFields(idBoard, card, cardID) {
       }
   })
   .catch(error =>{
-      //console.log(error)
+      console.log(error)
   })
 
   
@@ -762,13 +724,7 @@ async function updateDesvPercent(){
         // Actualizamos las desviaciones respectivas en BD
         let updateValues = await pool.query(`UPDATE activities SET act_desv_percentage = ${desvPert[i]}, act_day_desv = ${daysDesv[i]} 
          WHERE act_id = ${ids[i]}`)
-
-        //console.log(updateValues)
-
     }
-
-    //console.log("Desvicion de horas", desvPert)
-    //console.log("Desvicion de dias", daysDesv)
 
 }
 
@@ -789,7 +745,6 @@ async function updateRequest(){
 
     const ids = new Set(reqIds)
     reqIds = Array.from(ids)
-    //console.log(reqIds)
 
     let estimated = [];
     let loaded = [];
@@ -802,8 +757,6 @@ async function updateRequest(){
         loaded.push(querySumLoaded[0].sum_loaded)
     }
 
-    //console.log("Estimadas", estimated)
-    //console.log("Cargadas", loaded)
     let deviations = [];
     let daysDesv = [];
     // Calculo de las desviaciones para cada una de las solicitudes
@@ -815,7 +768,6 @@ async function updateRequest(){
         }
         // Se actualiza el campo de desviacion en base al resultado obtenido
         let updateDeviations = await pool.query(`UPDATE request SET req_deviations_ptge = ${deviations[i]} WHERE req_id = ${reqIds[i]}`)
-        //console.log(updateDeviations)
 
         // Se obtiene la diferencia en dias de ser el caso, si no 0
         if (finalDates[i] < date){
@@ -828,15 +780,7 @@ async function updateRequest(){
         }
         // Se actualiza el campo de desviacion en base al resultado obtenido
         let updateDaysDesv = await pool.query(`UPDATE request SET req_day_desv = ${daysDesv[i]} WHERE req_id = ${reqIds[i]}`)
-        //console.log(updateDaysDesv)
     }
-
-    ////console.log("Desviaciones", deviations)
-    ////console.log("Update", )
-    ////console.log("Final Dates", finalDates)
-    ////console.log("Desviacion de dias", daysDesv)
-    // //console.log("Sumatoria de estimated:", estimated)
-    ////console.log("Sumatoria de loaded:", loaded)
 
 
 }
