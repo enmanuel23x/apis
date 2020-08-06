@@ -114,10 +114,10 @@ router.get('/getTime', async (req, res) => {
             })
             totalhours = totalmin / 60
             try{
-                const request = await pool.query(`UPDATE activities SET act_time_loaded = '${totalhours}' WHERE act_trello_name = '${descps[j]}' `)
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                await updateDesvPercent()
-                await new Promise(resolve => setTimeout(resolve, 1000));
+              const request = await pool.query(`UPDATE activities SET act_time_loaded = '${totalhours}' WHERE act_trello_name = '${descps[j]}' `)
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              await updateDesvPercent()
+              await new Promise(resolve => setTimeout(resolve, 1000));
             }catch(error){
                 console.log(error)
             }
@@ -246,7 +246,7 @@ function getTimeEntries(userId, descp) {
 }
 
 async function updateTrelloCard() {
-    const activities = await pool.query(`select * from activities LEFT JOIN request ON activities.req_id = request.req_id where act_title = 'false'`)
+    const activities = await pool.query(`select * from activities LEFT JOIN request ON activities.req_id = request.req_id where act_title = 'false' AND act_time_loaded != 0`)
     let boardIds = activities.map(board => board.board_id)
     let boardIdsFiltered = []
     boardIds.forEach((boardId, i)=>{
