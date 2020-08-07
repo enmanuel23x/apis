@@ -64,6 +64,7 @@ router.get('/getCards', async (req, res) => {
         boards.forEach(async (board, i) => {
             cards[i] = await getCards(board.board_id);
             Array.from(cards[i]).forEach(async (card) => {
+              await delay(7000);
                 customFields = await getCustomFieldsInCard(card.id)
                 cflength = customFields.length
                     if(customFields[6]!= undefined && customFields[5]!= undefined && customFields[4]!= undefined && customFields[3]!= undefined 
@@ -77,6 +78,7 @@ router.get('/getCards', async (req, res) => {
                     const act_desv_percentage = customFields[1].value.number
                     const act_day_desv = customFields[0].value.number
                     const act_time_loaded = customFields[2].value.number
+                    await delay(7000);
                     const act_porcent = await calculatePorcent(card.id)
                     const exist = await pool.query(`SELECT * FROM activities WHERE act_trello_name = '${card.name}'`)
                     if(exist.length <= 0){
@@ -89,9 +91,9 @@ router.get('/getCards', async (req, res) => {
                       const requestx = await pool.query(`UPDATE activities SET act_init_real_date='${act_init_real_date}',act_real_end_date='${act_real_end_date}', act_porcent='${act_porcent}' WHERE act_trello_name ='${card.name}' `)
                     }
                   } 
-                  setTimeout(()=>{}, 6000)
+                  await delay(7000);
             })
-            setTimeout(()=>{}, 6000)
+            await delay(7000);
         }); 
         res.send("listo")
 });
