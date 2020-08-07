@@ -306,7 +306,7 @@ async function updateDesvPercent(){
 
     let desvPert = [];
     let daysDesv = [];
-
+    let temp = 0;
 
     // Guardamos los valores necesarios para el calculo respectivo
     const activities = await pool.query(`select * from activities where act_title = 'false'`)
@@ -340,10 +340,11 @@ async function updateDesvPercent(){
 
     // Para cada una de las actividades no completadas
     for (let i = 0; i < ids.length; i++) {
-        // Calculamos la desviacion si y solo si el tiempo cargado es mayor al tiempo estimado
-        // En caso contrario asignamos 0
-        if (time_loaded[i] > estimated_hours[i]) {
-            desvPert.push((estimated_hours[i]/time_loaded[i]) * 100)
+        // Calculamos la desviacion 
+        temp = ((time_loaded[i]/estimated_hours[i]) * 100)-100;
+        //si el porcentaje es negativo, cargamos 0
+        if (temp > 0) {
+            desvPert.push(temp)
         } else {
             desvPert.push(0)
         }
