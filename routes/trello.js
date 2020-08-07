@@ -93,7 +93,7 @@ router.get('/getCards', async (req, res) => {
                   } 
                   await delay(7000);
             })
-            await delay(7000);
+             await delay(7000);
         }); 
         res.send("listo")
 });

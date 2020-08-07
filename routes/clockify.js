@@ -310,7 +310,7 @@ async function updateDesvPercent(){
     let temp = 0;
 
     // Guardamos los valores necesarios para el calculo respectivo
-    const activities = await pool.query(`select * from activities where act_title = 'false' AND act_real_end_date IS NOT NULL AND act_init_real_date IS NOT NUL`)
+    const activities = await pool.query(`select * from activities where act_title = 'false' AND act_real_end_date IS NOT NULL AND act_init_real_date IS NOT NULL`)
     for (let i = 0; i < activities.length; i++) {
         time_loaded.push(activities[i].act_time_loaded)
         estimated_hours.push(activities[i].act_estimated_hours)
