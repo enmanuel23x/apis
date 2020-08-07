@@ -9,6 +9,7 @@ const express = require('express');
 const axios = require('axios');
 const delay = require('delay');
 const pool = require('../db/database');
+const { response } = require('express');
 //initializations
 const router = express.Router()
 const TrelloAxios = axios.create({
@@ -156,6 +157,7 @@ router.post('/updateCustomFieldCardDate', async (req, res) => {
  */
 router.post('/updateCustomFieldCardText', async (req, res) => {
     const { new_text, id_card, idCustomField } = req.body
+    await delay(3000);
     updated_card = await updateCustomFieldCardText(id_card, idCustomField, new_text)
     res.json({
         updated_card
@@ -167,6 +169,7 @@ router.post('/updateCustomFieldCardText', async (req, res) => {
  */
 router.post('/updateCustomFieldCardNumber', async (req, res) => {
     const { new_number, id_card, idCustomField } = req.body
+    await delay(3000);
     updated_card = await updateCustomFieldCardNumber(id_card, idCustomField, new_number)
     res.json({
         updated_card
@@ -386,8 +389,14 @@ function createList(boardId, name) {
   return new Promise(async (resolve,reject) => {
       try {
         async function createListprocess(resolve){
-          const result = await TrelloAxios.post(`/boards/${boardId}/lists${add}`, {"name": name });
-          resolve(result.data)
+          TrelloAxios.post(`/boards/${boardId}/lists${add}`, {"name": name })
+          .then ( (response) =>{
+            console.log(response)
+            resolve(response.data)
+          }).catch( err => {
+            console.log(err)
+            resolve(err)
+          })
         }
         setTimeout( function(){ createListprocess(resolve); }, 2000);
       } catch (error) {
