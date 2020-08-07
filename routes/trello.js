@@ -7,6 +7,7 @@
 //npm requires
 const express = require('express');
 const axios = require('axios');
+const delay = require('delay');
 const pool = require('../db/database');
 //initializations
 const router = express.Router()
@@ -46,7 +47,7 @@ router.get('/createCards', async (req,res)=>{
       if(card.board_id == boardId){
         data = await createCard(card, list.id)
       }
-      await new Promise(resolve => setTimeout(resolve, 7000));
+      await delay(7000);
     })
   })
   
@@ -304,7 +305,7 @@ function getBoards() {
 function getCards(id_board) {
     return new Promise(async (resolve,reject) => {
         try {
-          await new Promise(resolve => setTimeout(resolve, 7000));
+          await delay(7000);
           const result = await TrelloAxios.get(`/boards/${id_board}/cards${add}`);
           resolve(result.data)
         } catch (error) {
@@ -320,37 +321,37 @@ function createCustomFields(boardId) {
         "modelType": "board",
         "name": "Fecha de inicio planificada",
         "type":"date"});
-        await new Promise(resolve => setTimeout(resolve, 7000));
+        await delay(7000);
         const result2 = await TrelloAxios.post(`/customField${add}`, {"idModel":boardId,
         "modelType": "board",
         "name": "Fecha de inicio real",
         "type":"date"});
-        await new Promise(resolve => setTimeout(resolve, 7000));
+        await delay(7000);
         const result3 = await TrelloAxios.post(`/customField${add}`, {"idModel":boardId,
         "modelType": "board",
         "name": "Fecha fin estimada/real",
         "type":"date"});
-        await new Promise(resolve => setTimeout(resolve, 7000));
+        await delay(7000);
         const result4 = await TrelloAxios.post(`/customField${add}`, {"idModel":boardId,
         "modelType": "board",
         "name": "HH Estimadas",
         "type":"number"});
-        await new Promise(resolve => setTimeout(resolve, 7000));
+        await delay(7000);
         const result6 = await TrelloAxios.post(`/customField${add}`, {"idModel":boardId,
         "modelType": "board",
         "name": "HH Clockify",
         "type":"number"});
-        await new Promise(resolve => setTimeout(resolve, 7000));
+        await delay(7000);
         const result7 = await TrelloAxios.post(`/customField${add}`, {"idModel":boardId,
         "modelType": "board",
         "name": "% Desviación Plan vs Real",
         "type":"number"});
-        await new Promise(resolve => setTimeout(resolve, 7000));
+        await delay(7000);
         const result8 = await TrelloAxios.post(`/customField${add}`, {"idModel":boardId,
         "modelType": "board",
         "name": "Días de desviación",
         "type":"number"});
-        await new Promise(resolve => setTimeout(resolve, 7000));
+        await delay(7000);
         resolve(result8.data)
         }
         setTimeout( function(){ createCustomFieldsprocess(resolve); }, 2000);
@@ -363,7 +364,7 @@ function createCustomFields(boardId) {
 async function calculatePorcent(cardID) {
   return new Promise(async (resolve,reject) => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 7000));
+      await delay(7000);
   const result = await TrelloAxios.get(`/cards/${cardID}/checklists${add}`)
   let checklist = result.data[0]
   let checkItems = checklist.checkItems
@@ -401,9 +402,9 @@ function createCard(card, listId) {
         async function createCardprocess(resolve){
           const result = await TrelloAxios.post(`/card${add}`, {"name": card.act_trello_name,"idList": listId, "desc": card.act_description_trello, "due": card.act_end_date});
         const updateCard = await pool.query(`UPDATE activities SET act_card_id = '${result.data.id}' WHERE act_trello_name = '${card.act_trello_name}'`)
-        await new Promise(resolve => setTimeout(resolve, 7000));
+        await delay(7000);
         await updateCustomFields(card.board_id, card, result.data.id)
-        await new Promise(resolve => setTimeout(resolve, 7000));
+        await delay(7000);
         await addMember(card, result.data.id)
         resolve(result.data)
         }
@@ -420,7 +421,7 @@ async function addMember(card, cardId){
         
         const result = await TrelloAxios.get(`/members/${card.act_trello_user}${add}`);
         const memberId = result.data.id
-        await new Promise(resolve => setTimeout(resolve, 7000));
+        await delay(7000);
         const result1 = await TrelloAxios.post(`/card/${cardId}/idMembers${add}`, {"value": memberId});
         
         //resolve(result.data)
@@ -436,7 +437,7 @@ async function updateCustomFields(idBoard, card, cardID) {
       cf = resp.data
       camposP = {}
           for (let j = 0; j < cf.length; j++) {
-            await new Promise(resolve => setTimeout(resolve, 7000));
+            await delay(7000);
               if(cf[j].name == 'Días de desviación'){
                   axios.put(`https://api.trello.com/1/cards/${cardID}/customField/${cf[j].id}/item${add}`, {value:{number: '0'}})
                   .then(resp => {
@@ -491,7 +492,7 @@ async function updateCustomFields(idBoard, card, cardID) {
 function getCustomFieldsInCard(cardID) {
     return new Promise(async (resolve,reject) => {
         try {
-          await new Promise(resolve => setTimeout(resolve, 7000));
+          await delay(7000);
           const result = await TrelloAxios.get(`/cards/${cardID}/customFieldItems${add}`);
           resolve(result.data)
         } catch (error) {

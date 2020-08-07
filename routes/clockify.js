@@ -1,7 +1,7 @@
 const express = require('express')
 const cors = require('cors')
 const axios = require('axios')
-
+const delay = require('delay');
 //project's own requires
 const router = express.Router()
 const pool = require('../db/database');
@@ -115,19 +115,19 @@ router.get('/getTime', async (req, res) => {
             totalhours = totalmin / 60
             try{
               const request = await pool.query(`UPDATE activities SET act_time_loaded = '${totalhours}' WHERE act_trello_name = '${descps[j]}' `)
-              await new Promise(resolve => setTimeout(resolve, 3000));
+              await delay(3000);
               await updateDesvPercent()
-              await new Promise(resolve => setTimeout(resolve, 3000));
+              await delay(3000);
             }catch(error){
                 console.log(error)
             }
         }
-        await new Promise(resolve => setTimeout(resolve, 7000));
+        await delay(7000);
       }
     descps.forEach(async (descp, j) => {
       setTimeout( function(){ process(descp, j); }, 4000);
     })
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    await delay(3000);
   })
     res.send('listo')
 })
@@ -303,18 +303,19 @@ async function updateTrelloCard() {
 async function updateDesvPercent(){
     let time_loaded = []; let estimated_hours = [];  let status = []; let ids = [];
     let end_date = [];
-
+    let real_end_date = [];
     let desvPert = [];
     let daysDesv = [];
     let temp = 0;
 
     // Guardamos los valores necesarios para el calculo respectivo
-    const activities = await pool.query(`select * from activities where act_title = 'false'`)
+    const activities = await pool.query(`select * from activities where act_title = 'false' WHERE act_real_end_date IS NOT NULL AND act_init_real_date IS NOT NUL`)
     for (let i = 0; i < activities.length; i++) {
         time_loaded.push(activities[i].act_time_loaded)
         estimated_hours.push(activities[i].act_estimated_hours)
         ids.push(activities[i].act_id)
         status.push(activities[i].act_status)
+        real_end_date.push(activities[i].act_real_end_date);
         end_date.push(activities[i].act_end_date);
     }
 
@@ -332,11 +333,8 @@ async function updateDesvPercent(){
     estimated_hours = estimated_hours.filter((value, i) => !indexSet.has(i));
     ids = ids.filter((value, i) => !indexSet.has(i));
     status = status.filter((value, i) => !indexSet.has(i));
+    real_end_date = real_end_date.filter((value, i) => !indexSet.has(i));
     end_date = end_date.filter((value, i) => !indexSet.has(i));
-
-    // Objeto para obtener la fecha de hoy
-    let today = new Date()
-    let date = today;
 
     // Para cada una de las actividades no completadas
     for (let i = 0; i < ids.length; i++) {
@@ -350,10 +348,10 @@ async function updateDesvPercent(){
         }
 
         // Calculamos la desvicion en dias si y solo si la fecha in es menor a la fecha de hoy
-        if (end_date[i] < date){
+        if (end_date[i] < real_end_date[i]){
             //daysDesv.push()
             // fecha actual - fecha vieja = dias diff
-            let diffTime = Math.abs(date - end_date[i]);
+            let diffTime = Math.abs(real_end_date[i] - end_date[i]);
             let diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             daysDesv.push(diffDays)
         } else {
