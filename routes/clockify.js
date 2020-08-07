@@ -115,19 +115,19 @@ router.get('/getTime', async (req, res) => {
             totalhours = totalmin / 60
             try{
               const request = await pool.query(`UPDATE activities SET act_time_loaded = '${totalhours}' WHERE act_trello_name = '${descps[j]}' `)
-              await new Promise(resolve => setTimeout(resolve, 1000));
+              await new Promise(resolve => setTimeout(resolve, 3000));
               await updateDesvPercent()
-              await new Promise(resolve => setTimeout(resolve, 1000));
+              await new Promise(resolve => setTimeout(resolve, 3000));
             }catch(error){
                 console.log(error)
             }
         }
-        await new Promise(resolve => setTimeout(resolve, 6000));
+        await new Promise(resolve => setTimeout(resolve, 7000));
       }
     descps.forEach(async (descp, j) => {
-      setTimeout( function(){ process(descp, j); }, 2000);
+      setTimeout( function(){ process(descp, j); }, 4000);
     })
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 3000));
   })
     res.send('listo')
 })
