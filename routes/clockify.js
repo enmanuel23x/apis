@@ -314,7 +314,7 @@ async function updateDesvPercent(){
         time_loaded.push(activities[i].act_time_loaded)
         estimated_hours.push(activities[i].act_estimated_hours)
         ids.push(activities[i].act_id)
-        status.push(activities[i].status)
+        status.push(activities[i].act_status)
         end_date.push(activities[i].act_end_date);
     }
 
