@@ -23,8 +23,8 @@ axios.defaults.headers.common['X-Api-Key'] = 'Xvy1392jqzm2LxBF'
 axios.defaults.headers.common['content-type'] = 'application/json'
 //const userId = '5e1f5dc2b4e9df3331a30d80'
 const workspaceId = '5c79aee1b079877a63415e08'
-const add = '?key=97ed379704c2ca46cc6de86a6f0fa31f&token=dab44b231906a2484ee48d2fe11704046651e0083c6e71da3727f33589abd728';
-
+const add = '?key=5d94aa42b86a6f4e11d7cd857ff8699a&token=22b262d7b19e02d785a2b1fa0ba982e55ab891122b07d7ff79ffda934f7a4e28';
+//'?key=97ed379704c2ca46cc6de86a6f0fa31f&token=dab44b231906a2484ee48d2fe11704046651e0083c6e71da3727f33589abd728';
 
 //routes
 router.get('/', async (req, res) => {
@@ -79,6 +79,7 @@ router.get('/getTime', async (req, res) => {
     const data = await pool.query(`SELECT act_mail FROM activities where act_title = 'false'`)
     let emails = data.map(email => email.act_mail)
     let emailsFiltered = []
+    let cont = 0;
     emails.forEach((email, i)=>{
       if(!emailsFiltered.includes(email)){
         emailsFiltered[i]=email
@@ -90,6 +91,7 @@ router.get('/getTime', async (req, res) => {
     const activities = await pool.query(`SELECT * FROM activities WHERE act_mail = '${email}' AND act_title = 'false'`)
     let descps = activities.map(activity => activity.act_trello_name)
       async function process(descp, j){
+        await delay(7000);
         const data = await getTimeEntries(userId, descp)
         if(data.length > 0){
             var time = {}
@@ -116,20 +118,39 @@ router.get('/getTime', async (req, res) => {
             try{
               const request = await pool.query(`UPDATE activities SET act_time_loaded = '${totalhours}' WHERE act_trello_name = '${descps[j]}' `)
               await delay(3000);
-              await updateDesvPercent()
               await delay(3000);
+              cont++;
+              if(descps.length == cont){
+                await delay(3000);
+                await updateDesvPercent()
+                res.send("listo2")
+              }
+              return 0;
             }catch(error){
-                console.log(error)
+              cont++;
+              if(descps.length == cont){
+                await delay(3000);
+                await updateDesvPercent()
+                res.send("listo2")
+              }
+              return 0;
             }
+        }else{
+          cont++;
+          if(descps.length == cont){
+            await delay(3000);
+            await updateDesvPercent()
+            res.send("listo2")
+          }
+          return 0;
         }
-        await delay(7000);
       }
-    descps.forEach(async (descp, j) => {
-      setTimeout( function(){ process(descp, j); }, 4000);
-    })
+      for(j=0;j<descps.length;j++){
+        await delay(3000);
+        await process(descps[j], j)
+      }
     await delay(3000);
   })
-    res.send('listo')
 })
 
 router.get('/actualizar', async (req, res)=>{
@@ -137,7 +158,6 @@ router.get('/actualizar', async (req, res)=>{
   //let id_boards = boards.map(board => board.board_id ) 
   await delay(3000);
   await updateTrelloCard()
-  
   res.send('listo')
 })
 router.post('/getEntrie', async (req, res) => { 
@@ -148,7 +168,7 @@ router.post('/getEntrie', async (req, res) => {
             res.json(Response.data)
             })
         .catch (error => {
-            console.log(error)
+            //console.log(error)
             res.json({
                 error
             })
@@ -164,7 +184,7 @@ function getUser(){
           const result = await ClockifyAxios.get('/user');
           resolve(result.data)
         } catch (error) {
-            console.log(error)
+            //console.log(error)
           reject(error)
         }
       });
@@ -176,7 +196,7 @@ function getUsers(email) {
           const result = await ClockifyAxios.get(`/workspaces/${workspaceId}/users`, { params: { email: email }});
           resolve(result.data)
         } catch (error) {
-            console.log(error)
+            //console.log(error)
           reject(error)
         }
       });
@@ -237,7 +257,7 @@ function getTimeEntries(userId, descp) {
           const result = await ClockifyAxios.get(`/workspaces/${workspaceId}/user/${userId}/time-entries`, {params})
           resolve(result.data)
         } catch (error) {
-            console.log(error)
+            //console.log(error)
           reject(error)
         }
       });
@@ -268,21 +288,21 @@ async function updateTrelloCard() {
                     .then(resp => {
                     })
                     .catch(error =>[
-                        console.log(error)
+                        //console.log(error)
                     ])
                 }else if(cf[j].name == '% Desviación Plan vs Real'){
                     axios.put(`https://api.trello.com/1/cards/${activities[i].act_card_id}/customField/${cf[j].id}/item${add}`, {value:{number: `${activities[i].act_desv_percentage}`}})
                     .then(resp => {
                     })
                     .catch(error =>[
-                        console.log(error)
+                        //console.log(error)
                     ])
                 }else if(cf[j].name == 'HH Clockify'){
                     axios.put(`https://api.trello.com/1/cards/${activities[i].act_card_id}/customField/${cf[j].id}/item${add}`, {value:{number: `${activities[i].act_time_loaded}`}})
                     .then(resp => {
                     })
                     .catch(error =>[
-                        console.log(error)
+                        //console.log(error)
                     ])
                 }
                setTimeout(()=>{}, 1000)     
@@ -292,7 +312,7 @@ async function updateTrelloCard() {
         }
     })
     .catch(error =>{
-        console.log(error)
+        //console.log(error)
     })
     setTimeout(()=>{}, 1000)
   })
@@ -365,7 +385,7 @@ async function updateDesvPercent(){
 
 
     }
-
+    return 0;
 }
 
 
@@ -399,7 +419,9 @@ function checkH(duration) {
                 )
                 .then((resp) => {
                 })
-                .catch((error) => [console.log(error)]);
+                .catch((error) => {
+                  //console.log(error)
+                });
             }  else if (
               cf[j].name == "HH Clockify"
             ) {
@@ -410,13 +432,15 @@ function checkH(duration) {
                 )
                 .then((resp) => {
                 })
-                .catch((error) => [console.log(error)]);
+                .catch((error)  => {
+                  //console.log(error)
+                });
             }
           }
         }
       })
       .catch((error) => {
-        console.log(error);
+        //console.log(error);
       });
   }
   
@@ -444,7 +468,7 @@ function checkH(duration) {
       
     })
     .catch(error=>{
-      console.log(error)
+      //console.log(error)
     })  
   }
   
@@ -462,7 +486,7 @@ function checkH(duration) {
         } 
       })
       .catch(error=>{
-        console.log(error)
+        //console.log(error)
       })
     }
   }

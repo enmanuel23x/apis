@@ -12,15 +12,6 @@ const clockify = require('./routes/clockify')
 const pool = require('./db/database');
 //inizialitation
 const app = express()
-/*https.createServer({
-  key: fs.readFileSync('./config/key.pem'),
-  cert: fs.readFileSync('./config//cert.pem'),
-  passphrase: 'YOUR PASSPHRASE HERE'
-}, app)*/
-//axios.defaults.baseURL = 'https://api.trello.com/1'
-//axios.defaults.headers.post['Content-Type'] = 'application/json';
-//const add = '?key=734b31643e39e65cb0f8acee8396ef28&token=b9bf1f625d2eab26d1d5b1c7008dfbf556fe66a2a2230ee0bab6df9469c6df47'
-
 
 //middlewares
 app.use(express.json())
