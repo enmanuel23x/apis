@@ -77,7 +77,7 @@ router.post('/getTasks', (req, res) => {
 })
 
 router.get('/getTime', async (req, res) => {
-    const data = await pool.query(`SELECT act_mail FROM activities where act_title = 'false'`)
+    const data = await pool.query(`SELECT act_mail FROM activities where act_title = 'false' AND (act_card_end = 1 OR act_card_end = 2)`)
     let emails = data.map(email => email.act_mail)
     let emailsFiltered = []
     let cont = 0;
@@ -89,7 +89,7 @@ router.get('/getTime', async (req, res) => {
     emailsFiltered.forEach(async email => {
     
     const userId = await getUserID(email)
-    const activities = await pool.query(`SELECT * FROM activities WHERE act_mail = '${email}' AND act_title = 'false'`)
+    const activities = await pool.query(`SELECT * FROM activities WHERE act_mail = '${email}' AND act_title = 'false' AND (act_card_end = 1 OR act_card_end = 2)`)
     let descps = activities.map(activity => activity.act_trello_name)
       async function process(descp, j){
         await delay(7000);
@@ -158,10 +158,9 @@ router.get('/getTime', async (req, res) => {
 })
 
 router.get('/actualizar', async (req, res)=>{
-  const boards = await pool.query(`SELECT * FROM request WHERE sta_id = 'open'`)
-  //let id_boards = boards.map(board => board.board_id ) 
   await delay(3000);
   await updateTrelloCard()
+  await pool.query('UPDATE activities SET act_card_end = 3 WHERE act_card_end = 2');
   res.send('listo')
 })
 router.post('/getEntrie', async (req, res) => { 
@@ -271,7 +270,7 @@ function getTimeEntries(userId, descp) {
 }
 
 async function updateTrelloCard() {
-    const activities = await pool.query(`select * from activities LEFT JOIN request ON activities.req_id = request.req_id where act_title = 'false' AND act_time_loaded != 0`)
+    const activities = await pool.query(`select * from activities LEFT JOIN request ON activities.req_id = request.req_id where act_title = 'false' AND act_time_loaded != 0 AND (act_card_end = 1 OR act_card_end = 2)`)
     let boardIds = activities.map(board => board.board_id)
     let boardIdsFiltered = []
     boardIds.forEach((boardId, i)=>{

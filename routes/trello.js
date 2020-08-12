@@ -80,9 +80,13 @@ router.get('/createCards', async (req,res)=>{
  */
 router.get('/getCards', async (req, res) => {
         const boards = await pool.query(`SELECT * FROM request WHERE sta_id = 'open'`)
-        let cards = []
+        let cards = [], lists = [], initList = [], endList = [], valtList = [], end = 0;
         let cont = 0, cont2 = 0, count = 0;
         boards.forEach(async (board, i) => {
+          lists[i] = (await TrelloAxios.get(`/boards/${board.board_id}/lists${add}`)).data;
+          initList[i] = lists[i].filter( (el) => el.name.toUpperCase() == "Por Iniciar".toUpperCase() )[0].id;
+          endList[i] = lists[i].filter( (el) => el.name.toUpperCase() == "Finalizadas".toUpperCase() )[0].id;
+          valtList[i] = lists[i].filter( (el) => el.name.toUpperCase() == "Validadas".toUpperCase() )[0].id;
             cards[i] = await getCards(board.board_id);
             count += cards[i].length
             cont2++;
@@ -104,14 +108,23 @@ router.get('/getCards', async (req, res) => {
                     await delay(7000);
                     const act_porcent = await calculatePorcent(card.id)
                     const exist = await pool.query(`SELECT * FROM activities WHERE act_trello_name = '${card.name}'`)
+                    end = 0;
+                    if(card.idList != initList[i] && card.idList != endList[i]){
+                      end = 1;
+                    }else if(card.idList == endList[i]){
+                      await TrelloAxios.put(`/cards/${card.id}/${add}&idList=${valtList}`)
+                      end = 2;
+                    }else if(card.idList == valtList[i]){
+                      end = 3;
+                    }
                     if(exist.length <= 0){
                         try{
-                            const requestx = await pool.query(`INSERT INTO activities (req_id, act_trello_name, act_description_trello, act_card_id, act_init_date, act_init_real_date, act_end_date, act_real_end_date, act_estimated_hours, act_time_loaded , act_desv_percentage,act_day_desv, act_porcent) VALUES ('${req_id}','${card.name}', '${card.desc}', '${card.id}', '${act_init_date}', '${act_init_real_date}', '${act_end_date}', '${act_real_end_date}', '${estimated_hours}','${act_time_loaded}' ,'${act_desv_percentage}','${act_day_desv}', '${act_porcent}')`)
+                            const requestx = await pool.query(`INSERT INTO activities (req_id, act_trello_name, act_description_trello, act_card_id, act_init_date, act_init_real_date, act_end_date, act_real_end_date, act_estimated_hours, act_time_loaded , act_desv_percentage,act_day_desv, act_porcent, act_card_end) VALUES ('${req_id}','${card.name}', '${card.desc}', '${card.id}', '${act_init_date}', '${act_init_real_date}', '${act_end_date}', '${act_real_end_date}', '${estimated_hours}','${act_time_loaded}' ,'${act_desv_percentage}','${act_day_desv}', '${act_porcent}', '${end}')`)
                         } catch (error){
                             //console.log(error)
                         }
                     }else{
-                      const requestx = await pool.query(`UPDATE activities SET act_init_real_date='${act_init_real_date}',act_real_end_date='${act_real_end_date}', act_porcent='${act_porcent}' WHERE act_trello_name ='${card.name}' `)
+                      const requestx = await pool.query(`UPDATE activities SET act_init_real_date='${act_init_real_date}',act_real_end_date='${act_real_end_date}', act_porcent='${act_porcent}', act_card_end = '${end}' WHERE act_trello_name ='${card.name}' `)
                     }
                   } 
                   await delay(7000);
@@ -457,13 +470,11 @@ function createCard(card, listId) {
 async function addMember(card, cardId){
   return new Promise(async (resolve,reject) => {
       try {
-        
         const result = await TrelloAxios.get(`/members/${card.act_trello_user}${add}`);
         const memberId = result.data.id
-        await delay(7000);
+        await delay(4000);
         const result1 = await TrelloAxios.post(`/card/${cardId}/idMembers${add}`, {"value": memberId});
-        
-        //resolve(result.data)
+        resolve(result1.data)
       } catch (error) {
         reject(error)
       }
