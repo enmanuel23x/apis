@@ -58,7 +58,7 @@ router.get('/createCards', async (req,res)=>{
     }
   })
   boardIdsFiltered.forEach(async(boardId,i) =>{
-    list = await createList(boardId, 'Backlog - '+i)
+    list = await createList(boardId, 'Por Iniciar')
     if(i == 0){
       const data = await createCustomFields(boardId)
     }

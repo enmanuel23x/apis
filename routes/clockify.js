@@ -115,7 +115,7 @@ router.get('/getTime', async (req, res) => {
                 min = (parseInt(timeFormatted[0])*60) + parseInt(timeFormatted[1])
                 totalmin += min
             })
-            totalhours = totalmin / 60
+            totalhours = Math.round((totalmin / 60)*100)/100
             try{
               const request = await pool.query(`UPDATE activities SET act_time_loaded = '${totalhours}' WHERE act_trello_name = '${descps[j]}' `)
               await delay(3000);
@@ -123,7 +123,8 @@ router.get('/getTime', async (req, res) => {
               cont++;
               if(descps.length == cont){
                 await delay(3000);
-                await updateDesvPercent()
+                await updateDesvPercent();
+                await updateDesvPercent2();
                 res.send("listo2")
               }
               return 0;
@@ -132,6 +133,7 @@ router.get('/getTime', async (req, res) => {
               if(descps.length == cont){
                 await delay(3000);
                 await updateDesvPercent()
+                await updateDesvPercent2();
                 res.send("listo2")
               }
               return 0;
@@ -141,6 +143,7 @@ router.get('/getTime', async (req, res) => {
           if(descps.length == cont){
             await delay(3000);
             await updateDesvPercent()
+            await updateDesvPercent2();
             res.send("listo2")
           }
           return 0;
@@ -321,7 +324,10 @@ async function updateTrelloCard() {
 
     
 }
-
+async function updateDesvPercent2(){
+  await pool.query("UPDATE `request` AS `dest`, (SELECT `x`.`req_id`,`x`.`desv_perc` FROM (SELECT `req_id`, ((SUM(`act_time_loaded`) / SUM(`act_estimated_hours`))*100)-100 AS `desv_perc` from `activities` where `act_title` = 'false' AND `act_time_loaded` != 0 GROUP BY `req_id`) AS `x` WHERE `x`.`desv_perc` > 0) AS `src` SET `dest`.`req_deviations_ptge` = ROUND(`src`.`desv_perc`) , `dest`.`req_day_desv` = DATEDIFF(`dest`.`req_real_final_date`,`dest`.`req_final_date`) WHERE `dest`.`req_id` = `src`.`req_id`;")
+  return 0;
+}
 async function updateDesvPercent(){
     let time_loaded = []; let estimated_hours = [];  let status = []; let ids = [];
     let end_date = [];
