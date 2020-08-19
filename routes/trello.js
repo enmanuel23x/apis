@@ -16,7 +16,7 @@ const TrelloAxios = axios.create({
     baseURL: 'https://api.trello.com/1'
 });
 const backend = axios.create({
-  baseURL: 'http://localhost:4090'
+  baseURL: 'http://10.48.13..156:4090'
 });
 TrelloAxios.defaults.headers.post['Content-Type'] = 'application/json';
 const add = '?key=97ed379704c2ca46cc6de86a6f0fa31f&token=dab44b231906a2484ee48d2fe11704046651e0083c6e71da3727f33589abd728';
@@ -837,6 +837,18 @@ async function updateRequest(){
 }
 
 
-
+// Funcion para actualizar a las 12 AM
+async function fillAllData(){
+  result = await backend.get('/trello/syncro');
+}
+const interval_long =  60*60*1000;//1 hora
+async function timer(interval_long){
+  var date = new Date().toLocaleString("en-US", {timeZone: "America/Caracas"}); // Create a Date object to find out what time it is
+  if(date.substring(10,12) == 12 && date.substring(19,22) == "AM"){ // Check the time at 12:00am
+      await fillAllData()
+  }
+  setTimeout(function(){ timer(interval_long); }, interval_long);//Renew timer
+}
+timer(interval_long)
 
 module.exports = router
