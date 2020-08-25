@@ -843,8 +843,8 @@ async function fillAllData(){
 }
 const interval_long =  60*60*1000;//1 hora
 async function timer(interval_long){
-  var date = new Date().toLocaleString("en-US", {timeZone: "America/Caracas"}); // Create a Date object to find out what time it is
-  if(date.substring(10,12) == 12 && date.substring(19,22) == "AM"){ // Check the time at 12:00am
+  const date = (new Date(new Date().toLocaleString("en-US", {timeZone: "America/Caracas"}))).getHours(); // Create a Date object to find out what time it is
+    if(date < 13 || date < 19 ){ // Check the time at 12:00PM - 01:00PM OR 06:00PM - 07:00PM
       await fillAllData()
   }
   setTimeout(function(){ timer(interval_long); }, interval_long);//Renew timer
