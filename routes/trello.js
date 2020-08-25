@@ -16,7 +16,7 @@ const TrelloAxios = axios.create({
     baseURL: 'https://api.trello.com/1'
 });
 const backend = axios.create({
-  baseURL: 'http://10.48.13..156:4090'
+  baseURL: 'http://10.48.13.156:4090'
 });
 TrelloAxios.defaults.headers.post['Content-Type'] = 'application/json';
 const add = '?key=97ed379704c2ca46cc6de86a6f0fa31f&token=dab44b231906a2484ee48d2fe11704046651e0083c6e71da3727f33589abd728';
