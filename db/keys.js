@@ -1,11 +1,10 @@
+require('dotenv')
 module.exports = {
-
-        database:{
-            host: '10.48.13.154',
-            user: 'nodeuser',
-            password: 'nodeuser1234',
-            database: 'dbgestionocupacion',
-            port: '3306'
-        }
-        
+    database:{
+        host: process.env.DB_HOSTNAME,
+        port: process.env.DB_PORT,
+        user: process.env.DB_USERNAME,
+        password : process.env.DB_PASSWORD,
+        database : process.env.DB_NAME
+    }    
 }
