@@ -5,7 +5,7 @@
 
 */
 //npm requires
-require('dotenv')
+require('dotenv').config()
 const express = require('express');
 const axios = require('axios');
 const delay = require('delay');
@@ -111,7 +111,7 @@ router.get('/getCards', async (req, res) => {
                     if(card.idList != initList[i] && card.idList != endList[i]){
                       end = 1;
                     }else if(card.idList == endList[i]){
-                      await TrelloAxios.put(`/cards/${card.id}/${add}&idList=${valtList}`)
+                      await TrelloAxios.put(`/cards/${card.id}/${add}&idList=${valtList[i]}`)
                       end = 2;
                     }else if(card.idList == valtList[i]){
                       end = 3;

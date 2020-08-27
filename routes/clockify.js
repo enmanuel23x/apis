@@ -1,4 +1,4 @@
-require('dotenv')
+require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const axios = require('axios')
@@ -76,21 +76,9 @@ router.post('/getTasks', (req, res) => {
 })
 
 router.get('/getTime', async (req, res) => {
-    const data = await pool.query(`SELECT act_mail FROM activities where act_title = 'false' AND (act_card_end = 1 OR act_card_end = 2)`)
-    let emails = data.map(email => email.act_mail)
-    let emailsFiltered = []
-    let cont = 0;
-    emails.forEach((email, i)=>{
-      if(!emailsFiltered.includes(email)){
-        emailsFiltered[i]=email
-      }
-    })
-    emailsFiltered.forEach(async email => {
-    
-    const userId = await getUserID(email)
-    const activities = await pool.query(`SELECT * FROM activities WHERE act_mail = '${email}' AND act_title = 'false' AND (act_card_end = 1 OR act_card_end = 2)`)
-    let descps = activities.map(activity => activity.act_trello_name)
-      async function process(descp, j){
+    const activities = await pool.query(`SELECT * FROM activities where act_title = 'false' AND (act_card_end = 1 OR act_card_end = 2)`)
+      async function process(descp, email, cont ,al){
+        const userId = await getUserID(email)
         await delay(7000);
         const data = await getTimeEntries(userId, descp)
         if(data.length > 0){
@@ -116,44 +104,24 @@ router.get('/getTime', async (req, res) => {
             })
             totalhours = Math.round((totalmin / 60)*100)/100
             try{
-              const request = await pool.query(`UPDATE activities SET act_time_loaded = '${totalhours}' WHERE act_trello_name = '${descps[j]}' `)
+              const request = await pool.query(`UPDATE activities SET act_time_loaded = '${totalhours}' WHERE act_trello_name = '${descp}' `)
               await delay(3000);
-              await delay(3000);
-              cont++;
-              if(descps.length == cont){
-                await delay(3000);
-                await updateDesvPercent();
-                await updateDesvPercent2();
-                res.send("listo2")
-              }
               return 0;
             }catch(error){
-              cont++;
-              if(descps.length == cont){
-                await delay(3000);
-                await updateDesvPercent()
-                await updateDesvPercent2();
-                res.send("listo2")
-              }
               return 0;
             }
         }else{
-          cont++;
-          if(descps.length == cont){
-            await delay(3000);
-            await updateDesvPercent()
-            await updateDesvPercent2();
-            res.send("listo2")
-          }
           return 0;
         }
       }
-      for(j=0;j<descps.length;j++){
+      for(let index=0;index<activities.length; index++){
         await delay(3000);
-        await process(descps[j], j)
+        RES = await process(activities[index].act_trello_name, activities[index].act_mail, (index + 1), activities.length)
       }
-    await delay(3000);
-  })
+      await delay(3000);
+      await updateDesvPercent()
+      await updateDesvPercent2();
+      res.send("listo2")
 })
 
 router.get('/actualizar', async (req, res)=>{
