@@ -53,10 +53,10 @@ router.get('/createCards', async (req,res)=>{
   let forThisReq;
   for(let index1 = 0; index1 < boardIds.length; index1++){
     console.log("Crear Lista en: " + boardIds[index1].board_id)
-    list = await createList(boardIds[index1].board_id, 'Por Iniciar')
-    await createList(boardIds[index1].board_id, 'En Proceso')
-    await createList(boardIds[index1].board_id, 'Finalizadas')
     await createList(boardIds[index1].board_id, 'Validadas')
+    await createList(boardIds[index1].board_id, 'Finalizadas')
+    await createList(boardIds[index1].board_id, 'En Proceso')
+    list = await createList(boardIds[index1].board_id, 'Por Iniciar')
     console.log("Lista: " + list.id)
     forThisReq = await cardsToCreate.filter( el => el.req_id == boardIds[index1].req_id );
     await createCustomFields(boardIds[index1].board_id);
@@ -316,7 +316,7 @@ router.post('/deleteItemInCheckList', async (req, res) => {
 
 //Funciones
 function formatDateTime(dateTime) {
-    if(dateTime1= null && dateTime != 'null'){
+    if(dateTime != null && dateTime != 'null'){
       splitx = dateTime.split('.')
       lastSplit = splitx[0].split('T')
       date = lastSplit[0]
