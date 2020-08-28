@@ -62,6 +62,7 @@ router.get('/createCards', async (req,res)=>{
       console.log("Crear carta '" +forThisReq[index2].act_trello_name+"' en: " + list.id)
       await createCard(forThisReq[index2], list.id, boardIds[index1].board_id)
     }
+    await pool.query("UPDATE request SET req_cargar ='false' WHERE req_id = "+ boardIds[index1].req_id )
   }
   res.send('listo')
 
