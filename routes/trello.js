@@ -70,7 +70,7 @@ router.get('/createCards', async (req,res)=>{
  * Devuelve todas las tarjetas
  */
 router.get('/getCards', async (req, res) => {
-        const boards = await pool.query(`SELECT * FROM request WHERE sta_id = 'open'`)
+        const boards = await pool.query(`SELECT * FROM request WHERE sta_id = 'open' AND req_cargar = 'false';`)
         let cards = [], lists = [], initList = [], endList = [], valtList = [], end = 0;
         let cont = 0, cont2 = 0, count = 0;
         boards.forEach(async (board, i) => {
