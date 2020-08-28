@@ -54,6 +54,9 @@ router.get('/createCards', async (req,res)=>{
   for(let index1 = 0; index1 < boardIds.length; index1++){
     console.log("Crear Lista en: " + boardIds[index1].board_id)
     list = await createList(boardIds[index1].board_id, 'Por Iniciar')
+    await createList(boardIds[index1].board_id, 'En Proceso')
+    await createList(boardIds[index1].board_id, 'Finalizadas')
+    await createList(boardIds[index1].board_id, 'Validadas')
     console.log("Lista: " + list.id)
     forThisReq = await cardsToCreate.filter( el => el.req_id == boardIds[index1].req_id );
     await createCustomFields(boardIds[index1].board_id);
