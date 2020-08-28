@@ -48,29 +48,21 @@ router.get('/syncro', async (req, res) => {
 });
 
 router.get('/createCards', async (req,res)=>{
-  const cardsToCreate = await pool.query(`SELECT * FROM activities LEFT JOIN request ON activities.req_id = request.req_id WHERE activities.act_card_id IS NULL AND activities.act_title = 'false' ORDER BY activities.act_init_date`)
-  let boardIds = cardsToCreate.map(board => board.board_id)
-  let boardIdsFiltered = []
-  boardIds.forEach((boardId, i)=>{
-    if(!boardIdsFiltered.includes(boardId)){
-      boardIdsFiltered[i] = boardId
+  const cardsToCreate = await pool.query(`SELECT * FROM activities WHERE activities.act_card_id IS NULL AND activities.act_title = 'false' AND activities.act_mail != '' AND activities.act_trello_user != '' ORDER BY activities.req_id, activities.act_init_date`)
+  let boardIds = await pool.query("SELECT req_id, board_id FROM request WHERE req_cargar = 'true';")
+  let forThisReq;
+  for(let index1 = 0; index1 < boardIds.length; index1++){
+    console.log("Crear Lista en: " + boardIds[index1].board_id)
+    list = await createList(boardIds[index1].board_id, 'Por Iniciar')
+    console.log("Lista: " + list.id)
+    forThisReq = await cardsToCreate.filter( el => el.req_id == boardIds[index1].req_id );
+    await createCustomFields(boardIds[index1].board_id);
+    console.log("Se deben crear: " + forThisReq.length + " cartas")
+    for(let index2 = 0; index2 < forThisReq.length; index2++){
+      console.log("Crear carta '" +forThisReq[index2].act_trello_name+"' en: " + list.id)
+      await createCard(forThisReq[index2], list.id, boardIds[index1].board_id)
     }
-  })
-  boardIdsFiltered.forEach(async(boardId,i) =>{
-    list = await createList(boardId, 'Por Iniciar')
-    if(i == 0){
-      const data = await createCustomFields(boardId)
-    }
-    
-    cardsToCreate.forEach(async (card,i) =>{
-      
-      if(card.board_id == boardId){
-        data = await createCard(card, list.id)
-      }
-      await delay(7000);
-    })
-  })
-  
+  }
   res.send('listo')
 
 })
@@ -365,6 +357,7 @@ function getCards(id_board) {
       });
 }
 function createCustomFields(boardId) {
+  console.log("Creando CustomFields en: " + boardId)
   return new Promise(async (resolve,reject) => {
       try {
         async function createCustomFieldsprocess(resolve){
@@ -436,36 +429,21 @@ async function calculatePorcent(cardID) {
 function createList(boardId, name) {
   return new Promise(async (resolve,reject) => {
       try {
-        async function createListprocess(resolve){
-          TrelloAxios.post(`/boards/${boardId}/lists${add}`, {"name": name })
-          .then ( (response) =>{
-            //console.log(response)
-            resolve(response.data)
-          }).catch( err => {
-            console.log(err)
-            resolve(err)
-          })
-        }
-        setTimeout( function(){ createListprocess(resolve); }, 2000);
+          const list = await TrelloAxios.post(`/boards/${boardId}/lists${add}`, {"name": name });
+          resolve(list.data)
       } catch (error) {
-        reject(error)
+          reject(error)
       }
-    });
+  });
 }
-
-function createCard(card, listId) {
+function createCard(card, listId, board_id) {
   return new Promise(async (resolve,reject) => {
       try {
-        async function createCardprocess(resolve){
-          const result = await TrelloAxios.post(`/card${add}`, {"name": card.act_trello_name,"idList": listId, "desc": card.act_description_trello, "due": card.act_end_date});
+        const result = await TrelloAxios.post(`/card${add}`, {"name": card.act_trello_name,"idList": listId, "desc": card.act_description_trello, "due": card.act_end_date});
         const updateCard = await pool.query(`UPDATE activities SET act_card_id = '${result.data.id}' WHERE act_trello_name = '${card.act_trello_name}'`)
-        await delay(7000);
-        await updateCustomFields(card.board_id, card, result.data.id)
-        await delay(7000);
+        await updateCustomFields(board_id, card, result.data.id)
         await addMember(card, result.data.id)
         resolve(result.data)
-        }
-        setTimeout( function(){ createCardprocess(resolve); }, 2000);
       } catch (error) {
         reject(error)
       }
@@ -488,58 +466,48 @@ async function addMember(card, cardId){
 
 async function updateCustomFields(idBoard, card, cardID) {
   axios.get(`https://api.trello.com/1/boards/${idBoard}/customFields${add}`)
-  .then(async resp =>{
-      cf = resp.data
-      camposP = {}
-          for (let j = 0; j < cf.length; j++) {
-            await delay(7000);
-              if(cf[j].name == 'Días de desviación'){
-                  axios.put(`https://api.trello.com/1/cards/${cardID}/customField/${cf[j].id}/item${add}`, {value:{number: '0'}})
-                  .then(resp => {
-                  })
-                  .catch(error =>[
-                      console.log(error)
-                  ])
-              }else if(cf[j].name == '% Desviación Plan vs Real'){
-                  axios.put(`https://api.trello.com/1/cards/${cardID}/customField/${cf[j].id}/item${add}`, {value:{number: '0'}})
-                  .then(resp => {
-                  })
-                  .catch(error =>[
-                      console.log(error)
-                  ])
-              }else if(cf[j].name == 'HH Clockify'){
-                  axios.put(`https://api.trello.com/1/cards/${cardID}/customField/${cf[j].id}/item${add}`, {value:{number: `${card.act_time_loaded}`}})
-                  .then(resp => {
-                  })
-                  .catch(error =>[
-                      console.log(error)
-                  ])
-              }else if(cf[j].name == 'Fecha de inicio planificada'){
+    .then(async resp =>{
+      let cf = resp.data;
+      let camposP = {};
+      let split;
+      for (let j = 0; j < cf.length; j++) {
+        if(cf[j].name == 'Días de desviación'){
+          axios.put(`https://api.trello.com/1/cards/${cardID}/customField/${cf[j].id}/item${add}`, {value:{number: '0'}})
+            .then(resp => {})
+            .catch(error =>{
+              console.log(error)
+            })
+          }else if(cf[j].name == '% Desviación Plan vs Real'){
+            axios.put(`https://api.trello.com/1/cards/${cardID}/customField/${cf[j].id}/item${add}`, {value:{number: '0'}})
+              .then(resp => {})
+              .catch(error =>{
+                console.log(error)
+              })
+          }else if(cf[j].name == 'HH Clockify'){
+            axios.put(`https://api.trello.com/1/cards/${cardID}/customField/${cf[j].id}/item${add}`, {value:{number: `${card.act_time_loaded}`}})
+              .then(resp => {})
+              .catch(error =>{
+                console.log(error)
+              })
+          }else if(cf[j].name == 'Fecha de inicio planificada'){
             split = card.act_init_date
             axios.put(`https://api.trello.com/1/cards/${cardID}/customField/${cf[j].id}/item${add}`, {value:{date: `${split}`}})
-            .then(resp => {
-            })
-            .catch(error =>[
+              .then(resp => {})
+              .catch(error =>{
                 console.log(error)
-            ])
-        }else if(cf[j].name == 'HH Estimadas'){
-          axios.put(`https://api.trello.com/1/cards/${cardID}/customField/${cf[j].id}/item${add}`, {value:{number: `${card.act_estimated_hours}`}})
-          .then(resp => {
-          })
-          .catch(error =>[
+              })
+          }else if(cf[j].name == 'HH Estimadas'){
+            axios.put(`https://api.trello.com/1/cards/${cardID}/customField/${cf[j].id}/item${add}`, {value:{number: `${card.act_estimated_hours}`}})
+            .then(resp => {})
+            .catch(error =>{
               console.log(error)
-          ])
-      } 
-                  
-          
-          
+            })
+        }      
       }
-  })
-  .catch(error =>{
+    })
+    .catch(error =>{
       console.log(error)
-  })
-
-  
+    })
 }
 
 
