@@ -87,14 +87,14 @@ router.get('/getTime', async (req, res) => {
             var totalmin = 0
             var totalhours = 0
             data.forEach(async (dat, i) => {
-                oldFormat = data[i].timeInterval.duration
+                oldFormat = dat.timeInterval.duration
                 newFormat = oldFormat.split('PT')
                 isH = checkH(newFormat[1])
                 isM = checkM(newFormat[1])
                 isS = checkS(newFormat[1])
                 timeFormatted = formatTime(isH, isM, isS)
                 time[i] = {
-                    "description": data[i].description,
+                    "description": dat.description,
                     "hours": timeFormatted[0],
                     "minutes": timeFormatted[1],
                     "seconds": timeFormatted[2]
