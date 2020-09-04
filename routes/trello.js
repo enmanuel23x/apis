@@ -85,6 +85,9 @@ router.get('/getCards', async (req, res) => {
             cards[i] = await getCards(board.board_id);
             count += cards[i].length
             cont2++;
+            console.log("\tinitList: "+initList[i])
+            console.log("\endList: "+endList[i])
+            console.log("\valtList: "+valtList[i])
             Array.from(cards[i]).forEach(async (card) => {
               await delay(7000);
                 customFields = await getCustomFieldsInCard(card.id)
@@ -112,6 +115,7 @@ router.get('/getCards', async (req, res) => {
                     }else if(card.idList == valtList[i]){
                       end = 3;
                     }
+                    console.log(card.idList+": "+end)
                     if(exist.length == 0){
                         try{
                           email = (await TrelloAxios.get(`/cards/${card.id}/members${add}`)).data[0].id;
