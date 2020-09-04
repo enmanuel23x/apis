@@ -87,8 +87,8 @@ router.get('/getCards', async (req, res) => {
             cont2++;
             Array.from(cards[i]).forEach(async (card) => {
               await delay(7000);
-              cflength = customFields.length;
               customFields = await getCustomFieldsInCard(card.id)
+              cflength = customFields.length;
               if(cflength == 6){
                 const req_id = board.req_id
                 const act_init_date = formatDateTime(customFields[5].value.date)//init date
