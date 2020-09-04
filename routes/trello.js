@@ -85,30 +85,79 @@ router.get('/getCards', async (req, res) => {
             cards[i] = await getCards(board.board_id);
             count += cards[i].length
             cont2++;
-            console.log("\tinitList: "+initList[i])
-            console.log("\tendList: "+endList[i])
-            console.log("\tvaltList: "+valtList[i])
-            console.log("CARDS in "+board.board_id +": " +count)
             Array.from(cards[i]).forEach(async (card) => {
-              console.log("here")
               await delay(7000);
-                customFields = await getCustomFieldsInCard(card.id)
-                cflength = customFields.length
-                    if(customFields[6]!= undefined && customFields[5]!= undefined && customFields[4]!= undefined && customFields[3]!= undefined 
-                      && customFields[2]!= undefined && customFields[1]!= undefined && customFields[0]!= undefined){
-                        console.log("here2")
-                    const req_id = board.req_id
-                    const act_init_date = formatDateTime(customFields[6].value.date)
-                    const act_init_real_date = formatDateTime(customFields[5].value.date)
-                    const act_real_end_date = formatDateTime(customFields[4].value.date)
-                    const estimated_hours = customFields[3].value.number
-                    const act_end_date = formatDateTime(card.due)
-                    const act_desv_percentage = customFields[1].value.number
-                    const act_day_desv = customFields[0].value.number
-                    const act_time_loaded = customFields[2].value.number
-                    await delay(7000);
-                    const act_porcent = await calculatePorcent(card.id)
-                    const exist = await pool.query(`SELECT * FROM activities WHERE act_trello_name = '${card.name}'`)
+              cflength = customFields.length;
+              customFields = await getCustomFieldsInCard(card.id)
+              if(cflength == 6){
+                const req_id = board.req_id
+                const act_init_date = formatDateTime(customFields[5].value.date)//init date
+                const act_init_real_date = formatDateTime(customFields[4].value.date)//Real init date
+                const estimated_hours = customFields[3].value.number
+                const act_end_date = formatDateTime(card.due) //End date
+                const act_real_end_date = act_end_date;//formatDateTime(customFields[4].value.date)//Real end date
+                const act_desv_percentage = customFields[1].value.number
+                const act_day_desv = customFields[0].value.number
+                const act_time_loaded = customFields[2].value.number
+                await delay(7000);
+                const act_porcent = 0;//await calculatePorcent(card.id)
+                const exist = await pool.query(`SELECT * FROM activities WHERE act_trello_name = '${card.name}'`)
+                end = 0;
+                if(card.idList != initList[i] && card.idList != endList[i]){
+                  end = 1;
+                }else if(card.idList == endList[i]){
+                  await TrelloAxios.put(`/cards/${card.id}/${add}&idList=${valtList[i]}`)
+                  end = 2;
+                }else if(card.idList == valtList[i]){
+                  end = 3;
+                }
+                console.log(card.idList+": "+end)
+                if(exist.length == 0){
+                  try{
+                    email = (await TrelloAxios.get(`/cards/${card.id}/members${add}`)).data[0].id;
+                    email = await trelloGetEmail(email);
+                    const requestx = await pool.query(`INSERT INTO activities (req_id, act_trello_name, act_description_trello, act_card_id, act_init_date, act_init_real_date, act_end_date, act_real_end_date, act_estimated_hours, act_time_loaded , act_desv_percentage,act_day_desv, act_porcent, act_card_end, act_title, act_trello_user, act_mail) VALUES ('${req_id}','${card.name}', '${card.desc}', '${card.id}', '${act_init_date}', '${act_init_real_date}', '${act_end_date}', '${act_real_end_date}', '${estimated_hours}','${act_time_loaded}' ,'${act_desv_percentage}','${act_day_desv}', '${act_porcent}', '${end}', 'false', '${email}', '${email}' )`)
+                  } catch (error){
+                    console.log(error)
+                  }
+                }else{
+                  const requestx = await pool.query(`UPDATE activities SET act_init_real_date='${act_init_real_date}',act_real_end_date='${act_real_end_date}', act_porcent='${act_porcent}', act_card_end = '${end}' WHERE act_trello_name ='${card.name}' `)
+                }
+              }else if(cflength == 7){
+                const req_id = board.req_id
+                const act_init_date = formatDateTime(customFields[6].value.date)//init date
+                const act_init_real_date = formatDateTime(customFields[5].value.date)//Real init date
+                const estimated_hours = customFields[3].value.number
+                const act_end_date = formatDateTime(card.due) //End date
+                const act_real_end_date = formatDateTime(customFields[4].value.date)//Real end date
+                const act_desv_percentage = customFields[1].value.number
+                const act_day_desv = customFields[0].value.number
+                const act_time_loaded = customFields[2].value.number
+                await delay(7000);
+                const act_porcent = 0;//await calculatePorcent(card.id)
+                const exist = await pool.query(`SELECT * FROM activities WHERE act_trello_name = '${card.name}'`)
+                end = 0;
+                if(card.idList != initList[i] && card.idList != endList[i]){
+                  end = 1;
+                }else if(card.idList == endList[i]){
+                  await TrelloAxios.put(`/cards/${card.id}/${add}&idList=${valtList[i]}`)
+                  end = 2;
+                }else if(card.idList == valtList[i]){
+                  end = 3;
+                }
+                console.log(card.idList+": "+end)
+                if(exist.length == 0){
+                  try{
+                    email = (await TrelloAxios.get(`/cards/${card.id}/members${add}`)).data[0].id;
+                    email = await trelloGetEmail(email);
+                    const requestx = await pool.query(`INSERT INTO activities (req_id, act_trello_name, act_description_trello, act_card_id, act_init_date, act_init_real_date, act_end_date, act_real_end_date, act_estimated_hours, act_time_loaded , act_desv_percentage,act_day_desv, act_porcent, act_card_end, act_title, act_trello_user, act_mail) VALUES ('${req_id}','${card.name}', '${card.desc}', '${card.id}', '${act_init_date}', '${act_init_real_date}', '${act_end_date}', '${act_real_end_date}', '${estimated_hours}','${act_time_loaded}' ,'${act_desv_percentage}','${act_day_desv}', '${act_porcent}', '${end}', 'false', '${email}', '${email}' )`)
+                  } catch (error){
+                    console.log(error)
+                  }
+                }else{
+                  const requestx = await pool.query(`UPDATE activities SET act_init_real_date='${act_init_real_date}',act_real_end_date='${act_real_end_date}', act_porcent='${act_porcent}', act_card_end = '${end}' WHERE act_trello_name ='${card.name}' `)
+                }
+              }else{
                     end = 0;
                     if(card.idList != initList[i] && card.idList != endList[i]){
                       end = 1;
@@ -118,29 +167,7 @@ router.get('/getCards', async (req, res) => {
                     }else if(card.idList == valtList[i]){
                       end = 3;
                     }
-                    console.log(card.idList+": "+end)
-                    if(exist.length == 0){
-                        try{
-                          email = (await TrelloAxios.get(`/cards/${card.id}/members${add}`)).data[0].id;
-                          email = await trelloGetEmail(email);
-                          const requestx = await pool.query(`INSERT INTO activities (req_id, act_trello_name, act_description_trello, act_card_id, act_init_date, act_init_real_date, act_end_date, act_real_end_date, act_estimated_hours, act_time_loaded , act_desv_percentage,act_day_desv, act_porcent, act_card_end, act_title, act_trello_user, act_mail) VALUES ('${req_id}','${card.name}', '${card.desc}', '${card.id}', '${act_init_date}', '${act_init_real_date}', '${act_end_date}', '${act_real_end_date}', '${estimated_hours}','${act_time_loaded}' ,'${act_desv_percentage}','${act_day_desv}', '${act_porcent}', '${end}', 'false', '${email}', '${email}' )`)
-                          } catch (error){
-                            console.log(error)
-                        }
-                    }else{
-                      const requestx = await pool.query(`UPDATE activities SET act_init_real_date='${act_init_real_date}',act_real_end_date='${act_real_end_date}', act_porcent='${act_porcent}', act_card_end = '${end}' WHERE act_trello_name ='${card.name}' `)
-                    }
-                  }else{
-                    end = 0;
-                    if(card.idList != initList[i] && card.idList != endList[i]){
-                      end = 1;
-                    }else if(card.idList == endList[i]){
-                      await TrelloAxios.put(`/cards/${card.id}/${add}&idList=${valtList[i]}`)
-                      end = 2;
-                    }else if(card.idList == valtList[i]){
-                      end = 3;
-                    }
-                    console.log(card.idList+": "+end)
+                    console.log(card.name+": "+end)
                     console.log("CF: "+customFields.length)
                   }
                   await delay(7000);
