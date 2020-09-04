@@ -130,6 +130,7 @@ router.get('/getCards', async (req, res) => {
                       const requestx = await pool.query(`UPDATE activities SET act_init_real_date='${act_init_real_date}',act_real_end_date='${act_real_end_date}', act_porcent='${act_porcent}', act_card_end = '${end}' WHERE act_trello_name ='${card.name}' `)
                     }
                   } 
+                  console.log(customFields)
                   await delay(7000);
                   cont++;
                   if(boards.length == cont2 && count == cont){
