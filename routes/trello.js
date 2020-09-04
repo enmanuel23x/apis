@@ -88,8 +88,9 @@ router.get('/getCards', async (req, res) => {
             console.log("\tinitList: "+initList[i])
             console.log("\tendList: "+endList[i])
             console.log("\tvaltList: "+valtList[i])
-            console.log(count)
+            console.log("CARDS in "+board.board_id +": " +count)
             Array.from(cards[i]).forEach(async (card) => {
+              console.log("here")
               await delay(7000);
                 customFields = await getCustomFieldsInCard(card.id)
                 cflength = customFields.length
