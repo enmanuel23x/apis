@@ -131,7 +131,17 @@ router.get('/getCards', async (req, res) => {
                       const requestx = await pool.query(`UPDATE activities SET act_init_real_date='${act_init_real_date}',act_real_end_date='${act_real_end_date}', act_porcent='${act_porcent}', act_card_end = '${end}' WHERE act_trello_name ='${card.name}' `)
                     }
                   }else{
-                    console.log(customFields)
+                    end = 0;
+                    if(card.idList != initList[i] && card.idList != endList[i]){
+                      end = 1;
+                    }else if(card.idList == endList[i]){
+                      await TrelloAxios.put(`/cards/${card.id}/${add}&idList=${valtList[i]}`)
+                      end = 2;
+                    }else if(card.idList == valtList[i]){
+                      end = 3;
+                    }
+                    console.log(card.idList+": "+end)
+                    console.log("CF: "+customFields.length)
                   }
                   await delay(7000);
                   cont++;
