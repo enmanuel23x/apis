@@ -96,6 +96,7 @@ router.get('/getCards', async (req, res) => {
                 cflength = customFields.length
                     if(customFields[6]!= undefined && customFields[5]!= undefined && customFields[4]!= undefined && customFields[3]!= undefined 
                       && customFields[2]!= undefined && customFields[1]!= undefined && customFields[0]!= undefined){
+                        console.log("here2")
                     const req_id = board.req_id
                     const act_init_date = formatDateTime(customFields[6].value.date)
                     const act_init_real_date = formatDateTime(customFields[5].value.date)
@@ -129,8 +130,9 @@ router.get('/getCards', async (req, res) => {
                     }else{
                       const requestx = await pool.query(`UPDATE activities SET act_init_real_date='${act_init_real_date}',act_real_end_date='${act_real_end_date}', act_porcent='${act_porcent}', act_card_end = '${end}' WHERE act_trello_name ='${card.name}' `)
                     }
-                  } 
-                  console.log(customFields)
+                  }else{
+                    console.log(customFields)
+                  }
                   await delay(7000);
                   cont++;
                   if(boards.length == cont2 && count == cont){
