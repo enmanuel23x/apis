@@ -76,18 +76,19 @@ router.get('/createCards', async (req,res)=>{
 router.get('/getCards', async (req, res) => {
         const boards = await pool.query(`SELECT * FROM request WHERE sta_id = 'open' AND req_cargar = 'false';`)
         let cards = [], lists = [], initList = [], endList = [], valtList = [], end = 0;
-        let cont = 0, cont2 = 0, count = 0;
-        boards.forEach(async (board, i) => {
+        let cont = 0, cont2 = 0, count = 0, board = {}, card = {};
+        for(let i = 0; i<boards.length; i++){
+          board = boards[i]
           lists[i] = (await TrelloAxios.get(`/boards/${board.board_id}/lists${add}`)).data;
           initList[i] = lists[i].filter( (el) => el.name.toUpperCase() == "Por Iniciar".toUpperCase() )[0].id;
           endList[i] = lists[i].filter( (el) => el.name.toUpperCase() == "Finalizadas".toUpperCase() )[0].id;
           valtList[i] = lists[i].filter( (el) => el.name.toUpperCase() == "Validadas".toUpperCase() )[0].id;
-            cards[i] = await getCards(board.board_id);
-            count += cards[i].length
-            cont2++;
-            Array.from(cards[i]).forEach(async (card) => {
-              await delay(7000);
-              customFields = await getCustomFieldsInCard(card.id)
+          cards[i] = await getCards(board.board_id);
+          count += cards[i].length
+          cont2++;
+          for(let j=0; j<cards[i].length; j++){
+            card = cards[i][j];
+            customFields = await getCustomFieldsInCard(card.id)
               cflength = customFields.length;
               if(cflength == 6){
                 const req_id = board.req_id
@@ -99,7 +100,6 @@ router.get('/getCards', async (req, res) => {
                 const act_desv_percentage = customFields[1].value.number
                 const act_day_desv = customFields[0].value.number
                 const act_time_loaded = customFields[2].value.number
-                await delay(7000);
                 const act_porcent = 0;//await calculatePorcent(card.id)
                 const exist = await pool.query(`SELECT * FROM activities WHERE act_trello_name = '${card.name}'`)
                 end = 0;
@@ -133,7 +133,6 @@ router.get('/getCards', async (req, res) => {
                 const act_desv_percentage = customFields[1].value.number
                 const act_day_desv = customFields[0].value.number
                 const act_time_loaded = customFields[2].value.number
-                await delay(7000);
                 const act_porcent = 0;//await calculatePorcent(card.id)
                 const exist = await pool.query(`SELECT * FROM activities WHERE act_trello_name = '${card.name}'`)
                 end = 0;
@@ -170,15 +169,13 @@ router.get('/getCards', async (req, res) => {
                     console.log(card.name+": "+end)
                     console.log("CF: "+customFields.length)
                   }
-                  await delay(7000);
                   cont++;
                   if(boards.length == cont2 && count == cont){
                    res.send("listo ")
                   }
-            })
-             await delay(7000);
+          }
              
-        }); 
+        }
         
 });
 
